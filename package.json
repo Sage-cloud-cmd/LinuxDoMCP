@@ -1,0 +1,10 @@
+{
+  "name": "linuxdo-mcp-bridge",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun src/server.ts",
+    "test": "bun test"
+  }
+}

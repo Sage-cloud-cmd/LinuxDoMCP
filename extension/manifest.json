@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "linux.do MCP 桥",
+  "version": "0.3.0",
+  "description": "让本机的 Claude Code 借你已登录的 Chrome 只读访问 linux.do。只连 127.0.0.1，不读 cookie。",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlqAnumAgs2BRXQFAM3octPVFWNEGpQsS+gytqXFS97CIvrj6fx6b0h+NRQY3Jj9FNfAQfrt6EbWGX+jQyOjK4QaBR9MOtFK37vNNvZ2uxn/KnODQRCXFVWIWXOxP+MlaZw5taaesTzlUPw7RJjaAtN4hYyfCse2q2yixNKuB7w+CcH4dhpKdO9Au4NSUHc12LsuPtSOIpPF20urdgn0YEr3+qpaoK+QyNJcVPh2iLJGxhyQoRKd4yMjr4+rtD5/s5Hk7njrz0zcsJYfy+UTlsXY7XjhHmDNLf0Ejuy3pPZwZ5JHgF8pY3KrlFkKsWx8xCVcBBuqY9GGPP6oBmwTiwwIDAQAB",
+  "minimum_chrome_version": "116",
+  "permissions": ["scripting", "alarms", "storage"],
+  "host_permissions": ["https://linux.do/*"],
+  "background": { "service_worker": "background.js" }
+}

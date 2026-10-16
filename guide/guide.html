@@ -1,0 +1,418 @@
+<title>linux.do MCP 上手指南</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 版式：单栏阅读宽度，步骤沿左侧一条「楼层线」往下走；示例输出模仿 L 站原文的「作者 | 时间 | #楼号」 */
+:root {
+  --paper: #f5f7fa;
+  --sheet: #ffffff;
+  --ink: #18202e;
+  --muted: #5a6476;
+  --line: #dce2eb;
+  --accent: #2552cc;
+  --accent-soft: #e7eefc;
+  --warn: #9a5a08;
+  --warn-soft: #fbf1e2;
+  --ok: #1d7f47;
+  --code: #edf1f7;
+  --display: "Songti SC", "STSong", "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+  --body: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --mono: "SF Mono", "Menlo", "Consolas", "Cascadia Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f141b; --sheet: #161d27; --ink: #e5eaf2; --muted: #9aa5b6; --line: #273142;
+    --accent: #84a5ff; --accent-soft: #1b2741; --warn: #e3a552; --warn-soft: #2a2114; --ok: #56c48a; --code: #1b2330;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f141b; --sheet: #161d27; --ink: #e5eaf2; --muted: #9aa5b6; --line: #273142;
+  --accent: #84a5ff; --accent-soft: #1b2741; --warn: #e3a552; --warn-soft: #2a2114; --ok: #56c48a; --code: #1b2330;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font: 16px/1.75 var(--body);
+}
+.wrap {
+  max-width: 760px; margin: 0 auto;
+  padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px;
+}
+h1, h2, h3 { font-family: var(--display); font-weight: 700; text-wrap: balance; line-height: 1.3; margin: 0; }
+h1 { font-size: clamp(30px, 6vw, 42px); letter-spacing: 0.01em; }
+h2 { font-size: 26px; }
+h3 { font-size: 19px; }
+p { margin: 0; }
+a { color: var(--accent); }
+.eyebrow { font-size: 13px; letter-spacing: 0.12em; color: var(--muted); }
+.lede { font-size: 18px; color: var(--muted); max-width: 36em; }
+section { display: grid; gap: 20px; min-width: 0; }
+code, kbd, .mono { font-family: var(--mono); font-size: 0.9em; }
+kbd { border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--sheet); }
+
+/* 开头：一段对话，展示用起来是什么样 */
+.demo { background: var(--sheet); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.demo .ask { padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; gap: 10px; align-items: baseline; }
+.demo .who { font-size: 12px; letter-spacing: 0.08em; color: var(--muted); flex: none; }
+.demo .floors { padding: 14px 18px; display: grid; gap: 12px; font-size: 15px; }
+.floor-head { font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+.floor-head b { color: var(--accent); font-weight: 600; }
+.badge { display: inline-block; font-size: 12px; padding: 0 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); margin-left: 6px; }
+.badge.ok { background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); }
+
+/* 系统切换 */
+.os-switch { display: inline-flex; background: var(--sheet); border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 4px; }
+.os-switch button {
+  font: inherit; font-size: 15px; border: 0; border-radius: 999px; padding: 6px 18px; cursor: pointer;
+  background: transparent; color: var(--muted);
+}
+.os-switch button[aria-pressed="true"] { background: var(--accent); color: var(--sheet); }
+.os-switch button:focus-visible, .copy:focus-visible, .step input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+:root[data-os="mac"] .win, :root[data-os="windows"] .mac { display: none !important; }
+
+.need { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.need div { background: var(--sheet); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; font-size: 15px; min-width: 0; }
+.need b { display: block; font-size: 13px; color: var(--muted); font-weight: 500; letter-spacing: 0.04em; }
+
+/* 步骤：左侧一条线，每步一个圆点，可打勾 */
+.progress { font-size: 14px; color: var(--muted); }
+.progress .bar { height: 4px; background: var(--line); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.progress .bar i { display: block; height: 100%; width: 0; background: var(--ok); transition: width .3s ease; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.step { position: relative; padding: 0 0 32px 44px; min-width: 0; }
+.step::before { content: ""; position: absolute; left: 13px; top: 30px; bottom: 0; width: 2px; background: var(--line); }
+.step:last-child::before { display: none; }
+.step .dot {
+  position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; font: 600 14px/1 var(--mono);
+  background: var(--sheet); border: 2px solid var(--accent); color: var(--accent);
+}
+.step.done .dot { background: var(--ok); border-color: var(--ok); color: var(--sheet); }
+.step .body { display: grid; gap: 12px; min-width: 0; }
+.step h3 { padding-top: 1px; }
+.step label.mark { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); cursor: pointer; width: fit-content; }
+.step label.mark input { width: 18px; height: 18px; accent-color: var(--ok); }
+.step ul { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+
+.cmd { display: flex; align-items: stretch; background: var(--code); border-radius: 8px; min-width: 0; }
+.cmd pre { margin: 0; padding: 12px 14px; overflow-x: auto; flex: 1; min-width: 0; font: 14px/1.6 var(--mono); white-space: pre; }
+.copy {
+  flex: none; font: inherit; font-size: 13px; border: 0; border-left: 1px solid var(--line);
+  background: transparent; color: var(--accent); padding: 0 14px; cursor: pointer; border-radius: 0 8px 8px 0;
+}
+.copy:hover { background: var(--accent-soft); }
+.note { font-size: 14.5px; color: var(--muted); }
+.callout { border-radius: 8px; padding: 12px 16px; font-size: 15px; background: var(--warn-soft); color: var(--ink); }
+.callout b { color: var(--warn); }
+
+/* chrome://extensions 示意 */
+.mock { border: 1px solid var(--line); border-radius: 10px; background: var(--sheet); overflow: hidden; font-size: 14px; }
+.mock .bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--code); }
+.mock .bar span { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+.mock .bar .url { margin-left: 8px; flex: 1; min-width: 0; background: var(--sheet); border-radius: 999px; padding: 2px 12px; font-family: var(--mono); font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mock .top { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; gap: 12px; flex-wrap: wrap; }
+.mock .toggle { display: inline-flex; align-items: center; gap: 8px; }
+.mock .toggle i { width: 34px; height: 18px; border-radius: 9px; background: var(--accent); position: relative; }
+.mock .toggle i::after { content: ""; position: absolute; right: 2px; top: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--sheet); }
+.mock .row { display: flex; gap: 8px; padding: 0 16px 12px; flex-wrap: wrap; }
+.mock .btn { border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; color: var(--muted); }
+.mock .btn.hi { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+.mock .card { margin: 0 16px 16px; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.mock .card small { display: block; color: var(--muted); font-size: 12px; }
+.mock .hint { font-size: 12px; color: var(--accent); }
+
+.out { background: var(--code); border-radius: 8px; padding: 12px 14px; font: 13.5px/1.7 var(--mono); overflow-x: auto; white-space: pre; }
+.out .good { color: var(--ok); }
+
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+.table-wrap { overflow-x: auto; background: var(--sheet); border: 1px solid var(--line); border-radius: 8px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { font-size: 13px; color: var(--muted); font-weight: 500; letter-spacing: 0.04em; }
+
+.prompts { display: grid; gap: 10px; }
+.prompt { display: flex; gap: 12px; align-items: center; background: var(--sheet); border: 1px solid var(--line); border-radius: 8px; padding: 10px 10px 10px 16px; min-width: 0; }
+.prompt span { flex: 1; min-width: 0; }
+.prompt .copy { border: 1px solid var(--line); border-radius: 6px; padding: 4px 12px; }
+
+.modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.mode { border-top: 3px solid var(--accent); background: var(--sheet); border-radius: 0 0 8px 8px; padding: 14px 16px; display: grid; gap: 6px; font-size: 15px; min-width: 0; }
+.mode .k { font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+
+details { background: var(--sheet); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; }
+details + details { margin-top: -8px; }
+summary { cursor: pointer; font-weight: 600; }
+details > div { padding-top: 10px; display: grid; gap: 8px; font-size: 15px; }
+
+footer { font-size: 13.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 20px; display: grid; gap: 6px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header style="display:grid;gap:18px">
+  <p class="eyebrow">给佬友的安装与使用说明 · 版本 __VERSION__</p>
+  <h1>让 AI 帮你搜 L 站、读帖子、看评论</h1>
+  <p class="lede">装好后，在 Claude、Cursor、Codex 这些 AI 工具里说一句「L 站搜一下……」，它就会用你自己 Chrome 里的 L 站账号去搜、去读，再把结果整理给你。</p>
+  <div class="demo" aria-label="使用示例">
+    <div class="ask"><span class="who">你</span><span>L 站搜一下 Claude Code 缓存总过期怎么办，看看评论里大家怎么说</span></div>
+    <div class="floors">
+      <div>
+        <div class="floor-head">某位楼主 | 2026-10-07 08:18 | <b>#1</b></div>
+        <div>实验一跑半小时，缓存频繁过期，额度极不耐用……佬友们有什么好办法吗</div>
+      </div>
+      <div>
+        <div class="floor-head">某位佬友 | 2026-10-07 13:12 | <b>#9</b><span class="badge ok">楼主采纳</span><span class="badge">3 赞</span></div>
+        <div>订阅的缓存有效期是 1 小时，可以写个定时任务在 50 分钟时 ping 一下续期……</div>
+      </div>
+    </div>
+  </div>
+  <p class="note">上面是示意，AI 会像这样把楼主的问题和高赞、被采纳的回答一起拿给你看。</p>
+</header>
+
+<section aria-labelledby="need">
+  <h2 id="need">开始前确认三件事</h2>
+  <div class="need">
+    <div><b>浏览器</b>Chrome，并且已经登录 L 站</div>
+    <div><b>AI 工具</b>Claude Code、Claude 桌面版、Cursor、Codex 任一个，或别的支持 MCP 的工具</div>
+    <div><b>安装包</b>朋友发给你的 zip，Mac 和 Windows 各一个，别拿错</div>
+  </div>
+</section>
+
+<section aria-labelledby="install">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+    <h2 id="install">安装，大约 3 分钟</h2>
+    <div class="os-switch" role="group" aria-label="选择你的电脑">
+      <button type="button" id="os-mac" data-os="mac" aria-pressed="true">Mac</button>
+      <button type="button" id="os-windows" data-os="windows" aria-pressed="false">Windows</button>
+    </div>
+  </div>
+  <div class="progress" aria-live="polite"><span id="progress-text">还没开始</span><div class="bar"><i id="progress-bar"></i></div></div>
+
+  <ol class="steps">
+    <li class="step" data-step="1">
+      <span class="dot" aria-hidden="true">1</span>
+      <div class="body">
+        <h3>解压安装包，运行安装</h3>
+        <div class="mac">
+          <p>双击 <code>linuxdo-mcp-mac-__VERSION__.zip</code> 解压。打开「终端」（在启动台里搜“终端”），输入 <code>bash</code> 和一个空格，<b>把解压出来的 <code>install.sh</code> 拖进终端窗口</b>，按回车。</p>
+          <div class="cmd"><pre>bash </pre><button class="copy" type="button" data-copy="bash ">复制</button></div>
+          <p class="note">拖进去后那一行会变成 <code>bash /Users/你/Downloads/linuxdo-mcp-mac-__VERSION__/install.sh</code> 这样。</p>
+        </div>
+        <div class="win">
+          <p>右键 <code>linuxdo-mcp-windows-__VERSION__.zip</code> →「全部解压缩」。<b>别在压缩包里直接双击。</b>然后双击解压出来的 <code>install.bat</code>。</p>
+          <div class="callout"><b>弹出「Windows 已保护你的电脑」？</b>点「更多信息」，再点「仍要运行」。这个程序没有花钱买微软的签名，所以会被提示一下。</div>
+        </div>
+        <p>它会把程序装好，并自动登记到你电脑上装了的 AI 工具里。最后窗口会显示：</p>
+        <div class="out">登记到你电脑上的 AI 工具：
+  ✓ Claude Code：已登记（新开会话生效）
+  · Cursor：没装，跳过
+  ……</div>
+        <label class="mark"><input type="checkbox" id="done-1"> 这一步做完了</label>
+      </div>
+    </li>
+
+    <li class="step" data-step="2">
+      <span class="dot" aria-hidden="true">2</span>
+      <div class="body">
+        <h3>在 Chrome 里装扩展</h3>
+        <p>扩展是这套工具的“手”：AI 要读 L 站时，就是它在你的 Chrome 里替 AI 打开页面。</p>
+        <ul>
+          <li>在 Chrome 地址栏打开下面这个地址（要手动粘贴，点链接打不开）</li>
+          <li>打开右上角的 <b>「开发者模式」</b></li>
+          <li>点左上角的 <b>「加载已解压的扩展程序」</b>，选扩展文件夹</li>
+        </ul>
+        <div class="cmd"><pre>chrome://extensions</pre><button class="copy" type="button" data-copy="chrome://extensions">复制</button></div>
+        <div class="mock" aria-label="chrome://extensions 页面示意图">
+          <div class="bar"><span></span><span></span><span></span><div class="url">chrome://extensions</div></div>
+          <div class="top"><b>扩展程序</b><span class="toggle">开发者模式 <i></i></span></div>
+          <div class="row"><span class="btn hi">加载已解压的扩展程序</span><span class="btn">打包扩展程序</span><span class="btn">更新</span></div>
+          <div class="card"><div><b>linux.do MCP 桥</b> __VERSION__<small>让本机的 Claude Code 借你已登录的 Chrome 只读访问 linux.do</small></div><span class="hint">装好后会出现这张卡片</span></div>
+        </div>
+        <p>选文件夹时，扩展在这里（安装完已经自动复制到剪贴板）：</p>
+        <div class="cmd mac"><pre>~/.linuxdo-mcp/extension</pre><button class="copy" type="button" data-copy="~/.linuxdo-mcp/extension">复制</button></div>
+        <p class="note mac">在选择窗口里按 <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>G</kbd>，粘贴路径，回车，再点「选择」。</p>
+        <div class="cmd win"><pre>%LOCALAPPDATA%\linuxdo-mcp\extension</pre><button class="copy" type="button" data-copy="%LOCALAPPDATA%\linuxdo-mcp\extension">复制</button></div>
+        <p class="note win">在选择窗口顶部的地址栏粘贴路径，回车，再点「选择文件夹」。</p>
+        <label class="mark"><input type="checkbox" id="done-2"> 这一步做完了</label>
+      </div>
+    </li>
+
+    <li class="step" data-step="3">
+      <span class="dot" aria-hidden="true">3</span>
+      <div class="body">
+        <h3>自检一下</h3>
+        <p class="mac">在终端里运行：</p>
+        <p class="win">按 <kbd>Win</kbd> + <kbd>R</kbd>，输入 <code>cmd</code> 回车，在黑窗口里运行：</p>
+        <div class="cmd mac"><pre>~/.linuxdo-mcp/linuxdo-mcp check</pre><button class="copy" type="button" data-copy="~/.linuxdo-mcp/linuxdo-mcp check">复制</button></div>
+        <div class="cmd win"><pre>"%LOCALAPPDATA%\linuxdo-mcp\linuxdo-mcp.exe" check</pre><button class="copy" type="button" data-copy="&quot;%LOCALAPPDATA%\linuxdo-mcp\linuxdo-mcp.exe&quot; check">复制</button></div>
+        <p>看到这一行就对了（最多等 35 秒）：</p>
+        <div class="out"><span class="good">✓ 一切正常：Chrome 里登录的 L 站账号是 你的用户名（信任等级 2）。</span></div>
+        <p class="note">出现 ✗ 的话，看下面「遇到问题」，按提示改。</p>
+        <label class="mark"><input type="checkbox" id="done-3"> 自检通过了</label>
+      </div>
+    </li>
+
+    <li class="step" data-step="4">
+      <span class="dot" aria-hidden="true">4</span>
+      <div class="body">
+        <h3>让 AI 工具重新加载</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>你用的是</th><th>这样做</th></tr></thead>
+          <tbody>
+            <tr><td>Claude Code</td><td>新开一个会话</td></tr>
+            <tr><td>Claude 桌面版</td><td>完全退出（<span class="mac">⌘Q</span><span class="win">右下角托盘图标右键退出</span>），再打开</td></tr>
+            <tr><td>Cursor、Codex</td><td>关掉再打开</td></tr>
+            <tr><td>其他工具</td><td>把安装窗口里打印的那段配置粘贴到它的 MCP 设置里</td></tr>
+          </tbody>
+        </table></div>
+        <label class="mark"><input type="checkbox" id="done-4"> 重开好了</label>
+      </div>
+    </li>
+
+    <li class="step" data-step="5">
+      <span class="dot" aria-hidden="true">5</span>
+      <div class="body">
+        <h3>试一句</h3>
+        <div class="prompts">
+          <div class="prompt"><span>看看我 L 站登录的是哪个账号</span><button class="copy" type="button" data-copy="看看我 L 站登录的是哪个账号">复制</button></div>
+        </div>
+        <p class="note">AI 回答出你的用户名，就全部装好了。下面教你怎么用。</p>
+        <label class="mark"><input type="checkbox" id="done-5"> 能用了</label>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<section aria-labelledby="use">
+  <h2 id="use">怎么用</h2>
+  <p>不用记任何命令，像跟人说话一样就行。可以直接复制下面这些：</p>
+  <div class="prompts">
+    <div class="prompt"><span>L 站搜一下 Codex 额度怎么省，挑几个高赞帖子看看评论里的办法</span><button class="copy" type="button" data-copy="L 站搜一下 Codex 额度怎么省，挑几个高赞帖子看看评论里的办法">复制</button></div>
+    <div class="prompt"><span>读一下这个帖子，总结楼主的问题和评论里给出的解决方法：https://linux.do/t/topic/帖子编号</span><button class="copy" type="button" data-copy="读一下这个帖子，总结楼主的问题和评论里给出的解决方法：">复制</button></div>
+    <div class="prompt"><span>这个帖子楼主最后解决了吗？只看楼主的发言</span><button class="copy" type="button" data-copy="这个帖子楼主最后解决了吗？只看楼主的发言">复制</button></div>
+    <div class="prompt"><span>L 站今天的热门帖子有哪些，挑和 AI 编程有关的</span><button class="copy" type="button" data-copy="L 站今天的热门帖子有哪些，挑和 AI 编程有关的">复制</button></div>
+    <div class="prompt"><span>看看我的 L 站通知和书签</span><button class="copy" type="button" data-copy="看看我的 L 站通知和书签">复制</button></div>
+  </div>
+
+  <h3>读帖有三种方式，AI 会自己挑，你也可以点名要</h3>
+  <div class="modes">
+    <div class="mode"><b>按楼号读全文</b><span>从 1 楼往下读，一次 100 楼，长帖会自动翻页。适合想看完整讨论的时候。</span><span class="k">说「从头读一遍」</span></div>
+    <div class="mode"><b>高赞评论</b><span>楼主原帖，加上按点赞从多到少排的评论，被采纳的答案排第一。适合提问、求助、踩坑帖。</span><span class="k">说「看看高赞评论」</span></div>
+    <div class="mode"><b>只看楼主</b><span>楼主原帖，加上楼主后来的每一次发言。适合楼主后面补充了结果、写了“已解决”的帖子。</span><span class="k">说「只看楼主」</span></div>
+  </div>
+  <div class="callout"><b>不知道还能干什么？</b>直接问 AI：「你有哪些 L 站工具？分别怎么用？」每个工具都带说明，AI 会讲给你听。</div>
+</section>
+
+<section aria-labelledby="faq">
+  <h2 id="faq">遇到问题</h2>
+  <details><summary>自检说「扩展没连上」</summary><div>
+    <p>确认 Chrome 开着，并且在 <code>chrome://extensions</code> 里「linux.do MCP 桥」是启用状态。刚打开 Chrome 的话，等半分钟再试。</p>
+  </div></details>
+  <details><summary>提示「Cloudflare 要求验证」</summary><div>
+    <p>在 Chrome 里打开一次 <code>https://linux.do</code>，等页面正常显示（有时会先转一下验证），再让 AI 重试。</p>
+  </div></details>
+  <details><summary>提示「L 站在限流」</summary><div>
+    <p>L 站最近自己就常限流，跟你的操作关系不大。等一两分钟再问。别让 AI 一口气读太多帖子。</p>
+  </div></details>
+  <details><summary>Chrome 最左边多了一个固定的 L 站标签页</summary><div>
+    <p>这是扩展自己的工作页，AI 的请求都在那里发，不会动你自己开的 L 站页面。关了也没事，下次用时会自动再开。</p>
+  </div></details>
+  <details><summary>AI 说它没有 L 站工具</summary><div>
+    <p>回到第 4 步，确认 AI 工具已经完全重开。还不行的话，重新运行一次第 1 步的安装，看窗口里你的工具那一行是不是 ✓。</p>
+  </div></details>
+  <details class="win"><summary>杀毒软件拦了 linuxdo-mcp.exe</summary><div>
+    <p>选择「信任」或「允许」。这个程序只在你电脑上和 Chrome 扩展通信，只访问 linux.do。</p>
+  </div></details>
+  <details><summary>用别的电脑或别的 Chrome 账号</summary><div>
+    <p>扩展装在哪个 Chrome 里，就用哪个 Chrome 里登录的 L 站账号。换电脑要重新装一遍。</p>
+  </div></details>
+</section>
+
+<section aria-labelledby="remove">
+  <h2 id="remove">不想用了</h2>
+  <p class="mac">在终端里运行下面这行，再到 <code>chrome://extensions</code> 移除「linux.do MCP 桥」：</p>
+  <p class="win">在 cmd 黑窗口里运行下面这行，再到 <code>chrome://extensions</code> 移除「linux.do MCP 桥」：</p>
+  <div class="cmd mac"><pre>~/.linuxdo-mcp/linuxdo-mcp uninstall</pre><button class="copy" type="button" data-copy="~/.linuxdo-mcp/linuxdo-mcp uninstall">复制</button></div>
+  <div class="cmd win"><pre>"%LOCALAPPDATA%\linuxdo-mcp\linuxdo-mcp.exe" uninstall</pre><button class="copy" type="button" data-copy="&quot;%LOCALAPPDATA%\linuxdo-mcp\linuxdo-mcp.exe&quot; uninstall">复制</button></div>
+  <p class="note">它会从各个 AI 工具里撤掉登记，并删除程序。改过的配置文件旁边都留了 <code>.bak-linuxdo</code> 备份。</p>
+</section>
+
+<footer>
+  <p>这是朋友之间自用的小工具，不是 L 站官方出品。</p>
+  <p>只读不写：不发帖、不回帖、不点赞。不需要交出 cookie 或密码，除了 linux.do 不连任何别的网站。两次请求之间至少隔 1 秒，不给 L 站添负担。</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var store = {
+    get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+
+  // 系统切换：链接里带 #mac / #windows 优先，其次上次的选择，再按浏览器猜
+  function guessOS() {
+    var h = (location.hash || "").replace("#", "");
+    if (h === "mac" || h === "windows") return h;
+    var saved = store.get("ldmcp-os");
+    if (saved === "mac" || saved === "windows") return saved;
+    return /Win/i.test(navigator.platform || navigator.userAgent) ? "windows" : "mac";
+  }
+  function setOS(os) {
+    root.setAttribute("data-os", os);
+    document.querySelectorAll(".os-switch button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.os === os));
+    });
+    store.set("ldmcp-os", os);
+  }
+  document.querySelectorAll(".os-switch button").forEach(function (b) {
+    b.addEventListener("click", function () { setOS(b.dataset.os); });
+  });
+  setOS(guessOS());
+
+  // 复制按钮
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.getAttribute("data-copy");
+      var done = function () { var old = btn.textContent; btn.textContent = "已复制"; setTimeout(function () { btn.textContent = old; }, 1500); };
+      var fallback = function () {
+        var pre = btn.parentElement.querySelector("pre, span");
+        if (!pre) return;
+        var r = document.createRange(); r.selectNodeContents(pre);
+        var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+        btn.textContent = "已选中，按 Ctrl/⌘+C";
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+      else fallback();
+    });
+  });
+
+  // 步骤打勾和进度
+  var steps = Array.prototype.slice.call(document.querySelectorAll(".step"));
+  function refresh() {
+    var n = 0;
+    steps.forEach(function (s) {
+      var box = s.querySelector("input[type=checkbox]");
+      s.classList.toggle("done", box.checked);
+      if (box.checked) n++;
+    });
+    document.getElementById("progress-bar").style.width = (n / steps.length * 100) + "%";
+    document.getElementById("progress-text").textContent =
+      n === 0 ? "还没开始" : n === steps.length ? "全部完成，可以用了" : "已完成 " + n + " / " + steps.length + " 步";
+  }
+  steps.forEach(function (s) {
+    var box = s.querySelector("input[type=checkbox]");
+    box.checked = store.get("ldmcp-" + box.id) === "1";
+    box.addEventListener("change", function () { store.set("ldmcp-" + box.id, box.checked ? "1" : "0"); refresh(); });
+  });
+  refresh();
+})();
+</script>
