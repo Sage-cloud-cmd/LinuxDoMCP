@@ -1,5 +1,7 @@
 # linux.do MCP
 
+> **只想用？** 到 [Releases 页面](https://github.com/Sage-cloud-cmd/LinuxDoMCP/releases/latest) 下载安装包：Mac 下 `linuxdo-mcp-mac-*.zip`，Windows 下 `linuxdo-mcp-windows-*.zip`。解压后双击里面的 `guide.html`，跟着图文教程装，大约 3 分钟，不需要懂代码。
+
 让 Claude Code 只读访问 linux.do（L 站）：搜索、读整帖（可只看高赞评论或只看楼主，已解决的帖子标出采纳的答案）、读某一楼和它的回复、最新/热门、分类、标签、用户资料与动态、我的通知和书签，外加一个只读的 `get` 兜底。
 
 ## 为什么这样做
